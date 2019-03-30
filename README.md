@@ -1,2 +1,1 @@
-# learn-fun-no-profit
-Collection of programs with no real purpose
+Random snippets of code that I've used to test and learn stuff
