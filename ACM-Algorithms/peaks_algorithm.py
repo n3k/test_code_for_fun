@@ -1,3 +1,4 @@
+"""
 A non-empty array A consisting of N integers is given.
 
 A peak is an array element which is larger than its neighbours. More precisely, it is an index P such that 0 < P < N − 1 and A[P − 1] < A[P] > A[P + 1].
@@ -56,7 +57,7 @@ Write an efficient algorithm for the following assumptions:
 
         N is an integer within the range [1..400,000];
         each element of array A is an integer within the range [0..1,000,000,000].
-		
+"""		
 		
 		
 import random
