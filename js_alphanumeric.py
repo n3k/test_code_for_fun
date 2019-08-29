@@ -1,3 +1,6 @@
+# A bad jsobfuscator... Tried to generate chars with btoa() and String.fromCharCode() but it ended up consumig too much space.
+# It works but it's not efficient at all.
+
 rules = {}
 rules[0] = "(+[])"
 rules[1] = "(+!![])"
