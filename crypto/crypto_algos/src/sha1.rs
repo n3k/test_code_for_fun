@@ -335,8 +335,6 @@ impl Sha1 {
             // Copy content into last_block 
             // and update last_block size
             let src_slice = &m[offset..];
-            println!("{} block_nums: {}", src_slice.len(), block_nums);
-            println!("m_len: {}", m.len());
             self.last_block[0..src_slice.len()].copy_from_slice(src_slice);            
             self.last_block_size = src_slice.len();
 
