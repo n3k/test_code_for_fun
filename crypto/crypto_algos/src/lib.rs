@@ -1,9 +1,12 @@
-mod sha1;
-
+pub mod hash;
+pub mod sha1;
+pub mod hmac;
 
 #[cfg(test)]
 mod tests {
     use self::sha1::Sha1;
+    use self::hash::HashFunction;
+    use self::hmac::Hmac;
 
     use super::*;
 
@@ -86,6 +89,11 @@ mod tests {
         assert_eq!("797a6f0a2ddcd44d6a57d6bafb42a81b2437b800", sha1.hexdigest());
     }
 
+    #[test]
+    fn test_hmac_a() {
+        let mut hmac = Hmac::<Sha1>::new(b"foobar");
+        assert_eq!(hmac.hexdigest(b"testing hmac"), "6ea147540feeae6a99acaf3772286979806fcd3e");
+    }
 
     // #[test]
     // fn test_transmute() {

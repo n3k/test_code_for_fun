@@ -28,6 +28,8 @@
 
 use std::fmt::Write;
 
+use crate::hash::HashFunction;
+
 const DEBUG: bool = false;
 
 /// Initial SHA1 state
@@ -40,6 +42,7 @@ const H4: u32 = 0xC3D2E1F0;
 /// Block size
 const BLOCK_SIZE_BYTES: usize = 64; // 512 bits
 
+#[derive(Clone, Copy)]
 pub struct Sha1 { 
     /// These hold the state
     h0: u32,
@@ -57,9 +60,9 @@ pub struct Sha1 {
     last_block_size: usize,
 }
 
-impl Sha1 {
+impl HashFunction for Sha1 {
 
-    pub fn new() -> Self {
+    fn new() -> Self {
         Sha1 { 
             h0:H0, h1:H1, h2:H2, h3:H3, h4:H4,
             data_length: 0,
@@ -68,28 +71,12 @@ impl Sha1 {
         }
     }
 
-    fn get_state(&self) -> [u8; 20] {
-        let mut v = [0u32; 5];
-        v[0] = self.h0.to_be();
-        v[1] = self.h1.to_be();
-        v[2] = self.h2.to_be();
-        v[3] = self.h3.to_be();
-        v[4] = self.h4.to_be();
-
-        return unsafe { std::mem::transmute(v) };
-    }
-
-    pub fn get_hexstate(&self) -> String {
-        let mut s = String::new();
-        for &byte in &self.get_state() {            
-            write!(&mut s, "{:02x}", byte).expect("Unable to write");
-        }
-
-        s
+    fn block_size(&self) -> usize {
+        return BLOCK_SIZE_BYTES;
     }
 
     /// returns the current digest in bytes
-    pub fn digest(&mut self) -> [u8; 20] {        
+    fn digest(&mut self) -> Vec<u8> {        
 
         let (a, b, c, d, e) =
         if self.last_block_size > 0 {
@@ -149,14 +136,18 @@ impl Sha1 {
                 let h3 = h3.wrapping_add(h3x);
                 let h4 = h4.wrapping_add(h4x); 
 
-                let mut v = [0u32; 5];
-                v[0] = h0.to_be();
-                v[1] = h1.to_be();
-                v[2] = h2.to_be();
-                v[3] = h3.to_be();
-                v[4] = h4.to_be();
+                let mut v = Vec::<u32>::with_capacity(5);
+                v.push(h0.to_be());
+                v.push(h1.to_be());
+                v.push(h2.to_be());
+                v.push(h3.to_be());
+                v.push(h4.to_be());
 
-                return unsafe { std::mem::transmute(v) };
+                return unsafe { 
+                    let mut v: Vec<u8> = std::mem::transmute(v);
+                    v.set_len(20);
+                    v
+                };
             }
             
 
@@ -178,18 +169,22 @@ impl Sha1 {
         let h3 = self.h3.wrapping_add(d);
         let h4 = self.h4.wrapping_add(e); 
 
-        let mut v = [0u32; 5];
-        v[0] = h0.to_be();
-        v[1] = h1.to_be();
-        v[2] = h2.to_be();
-        v[3] = h3.to_be();
-        v[4] = h4.to_be();
+        let mut v = Vec::<u32>::with_capacity(5);
+        v.push(h0.to_be());
+        v.push(h1.to_be());
+        v.push(h2.to_be());
+        v.push(h3.to_be());
+        v.push(h4.to_be());
 
-        return unsafe { std::mem::transmute(v) };
+        return unsafe { 
+            let mut v: Vec<u8> = std::mem::transmute(v);
+            v.set_len(20);
+            v
+        };
     }
 
     /// returns a hex string with the digest
-    pub fn hexdigest(&mut self) -> String {
+    fn hexdigest(&mut self) -> String {
         let mut s = String::new();
         for &byte in &self.digest() {            
             write!(&mut s, "{:02x}", byte).expect("Unable to write");
@@ -199,7 +194,7 @@ impl Sha1 {
     }
 
     /// Receives the message and updates the internal state
-    pub fn update(&mut self, m: &[u8])  {        
+    fn update(&mut self, m: &[u8])  {        
         // length in bits
         let mut msg_len_bits = m.len() * 8;
 
@@ -340,6 +335,31 @@ impl Sha1 {
 
         } 
     }
+}
+
+impl Sha1 {
+
+    fn get_state(&self) -> [u8; 20] {
+        let mut v = [0u32; 5];
+        v[0] = self.h0.to_be();
+        v[1] = self.h1.to_be();
+        v[2] = self.h2.to_be();
+        v[3] = self.h3.to_be();
+        v[4] = self.h4.to_be();
+
+        return unsafe { std::mem::transmute(v) };
+    }
+
+    pub fn get_hexstate(&self) -> String {
+        let mut s = String::new();
+        for &byte in &self.get_state() {            
+            write!(&mut s, "{:02x}", byte).expect("Unable to write");
+        }
+
+        s
+    }
+
+    
 
     #[inline]
     fn sha1_compress(h0: u32, h1: u32, h2: u32, h3: u32, h4: u32, m_block: &[u8]) 
