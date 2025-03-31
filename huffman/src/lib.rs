@@ -85,12 +85,18 @@ impl HuffmanTree {
         let mut buckets = BTreeMap::<u32, Vec::<u8>>::new();
         
         for (jj, freq) in frequency_array.iter().enumerate() {
-            if *freq > 0 {
-                if let Some(bucket) = buckets.get_mut(&(*freq - 1)) {
-                    bucket.push(jj as u8)
-                } else {
-                    buckets.insert(*freq - 1, vec![jj as u8]);
-                }                                 
+            // if *freq > 0 {
+            //     if let Some(bucket) = buckets.get_mut(&(*freq - 1)) {
+            //         bucket.push(jj as u8)
+            //     } else {
+            //         buckets.insert(*freq - 1, vec![jj as u8]);
+            //     }                                 
+            // }
+        
+            if let Some(bucket) = buckets.get_mut(&(*freq)) {
+                bucket.push(jj as u8)
+            } else {
+                buckets.insert(*freq, vec![jj as u8]);
             }
         }
         
@@ -101,7 +107,8 @@ impl HuffmanTree {
             if let Some((freq, symbols)) = iter.next() {
                 'next_symbol: loop {
                     if let Some(sym) = symbols.pop() {                        
-                        stack.push((*freq + 1, HuffmanNode::new_symbol(Symbol(sym))));
+                        //stack.push((*freq + 1, HuffmanNode::new_symbol(Symbol(sym))));
+                        stack.push((*freq, HuffmanNode::new_symbol(Symbol(sym))));
                     } else {
                         break 'next_symbol;
                     }
@@ -190,7 +197,7 @@ impl HuffmanCode {
         Self { tree: Some(tree), code_map }
     }
 
-    pub fn encode(&self, data: &[u8]) -> BitVec {
+    pub fn encode(&self, data: &[u8]) -> BitVec::<u8> {
         let mut encoded = BitVec::new();
 
         for &byte in data {
@@ -203,7 +210,7 @@ impl HuffmanCode {
         encoded
     }
 
-    pub fn decode(&mut self, encoded: &BitVec) -> Vec<u8> {
+    pub fn decode(&mut self, encoded: &BitVec::<u8>) -> Vec<u8> {
         let mut decoded = Vec::new();
 
         // Take the tree out of self
@@ -282,6 +289,8 @@ impl HuffmanCode {
 
 #[cfg(test)]
 mod tests {
+    use bitvec::order::Lsb0;
+
     use super::*;
 
     #[test]
@@ -315,10 +324,17 @@ mod tests {
 
         println!("code_map: {:?}\n\n", huffman.code_map);
 
-        let encoded_data = huffman.encode(&[41, 41, 42, 43, 42, 41, 44, 45]);
+        let encoded_data = huffman.encode(&[41, 41, 42, 43, 42, 41, 41]);
         println!("encoded: {:?}", encoded_data);
 
-        let decoded_data = huffman.decode(&encoded_data);
+        let bytes: Vec<u8> = encoded_data.clone().into_vec();
+        for byte in &bytes {
+            println!("Byte: {:08b}", byte);
+        }
+
+        let bv2 = BitVec::<_, Lsb0>::from_vec(bytes);
+        
+        let decoded_data = huffman.decode(&bv2);
         println!("decoded: {:?}", decoded_data);
         // [1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1]
         // 41  41   42     43     42   41    44 
