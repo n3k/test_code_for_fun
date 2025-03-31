@@ -2,6 +2,8 @@ use std::{cell::RefCell, collections::{BTreeMap, HashMap}, fmt, ops::DerefMut, r
 
 use bitvec::vec::BitVec;
 
+const DEBUG_CODE: bool = false;
+
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Symbol(u8);
@@ -223,16 +225,22 @@ impl HuffmanCode {
         
         'decode_loop: loop {
             if let Some(bit) = bitstream.next() {
-                println!("Current bit: {:b}", *bit as u8);
+                if DEBUG_CODE {
+                    println!("Current bit: {:b}", *bit as u8);
+                }
                 let mut next_node = None;
                 {
                     let node_ref = current_node.borrow();
                     if let HuffmanNode::Frequency(..) = &node_ref.node {
                         next_node = if *bit {
-                            println!("going right");
+                            if DEBUG_CODE {
+                                println!("going right");
+                            }
                             node_ref.right.as_ref().map(|r| r.clone())
                         } else {
-                            println!("going left");
+                            if DEBUG_CODE {
+                                println!("going left");
+                            }
                             node_ref.left.as_ref().map(|l| l.clone())
                         };
                     }
@@ -245,13 +253,17 @@ impl HuffmanCode {
                         let node_ref = current_node.borrow();
                         if let HuffmanNode::Symbol(symbol) = &node_ref.node {
                             // If we're at a leaf, push the symbol
-                            println!("pushing symbol");
+                            if DEBUG_CODE {
+                                println!("pushing symbol");
+                            }
                             decoded.push(symbol.0);                            
                             do_reset = true;
                         } 
                     }
                     if do_reset {
-                        println!("---- reset!");
+                        if DEBUG_CODE {
+                            println!("---- reset!");
+                        }
                         current_node = rc_tree.clone();
                     }
                 } else {
@@ -322,7 +334,7 @@ mod tests {
             &[41, 41, 42, 43, 42, 41, 44]
         );
 
-        println!("code_map: {:?}\n\n", huffman.code_map);
+        //println!("code_map: {:?}\n\n", huffman.code_map);
 
         let encoded_data = huffman.encode(&[41, 41, 42, 43, 42, 41, 41]);
         println!("encoded: {:?}", encoded_data);
