@@ -1,6 +1,7 @@
 mod simple_kvs;
 mod segmented_kvs;
 mod rb_tree;
+mod hash;
 
 pub fn add(left: u64, right: u64) -> u64 {
     left + right
