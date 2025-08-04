@@ -64,10 +64,9 @@ impl <const N: usize> Vector<N> {
     
         let mut result = [0.0; N];
         for i in 0..matrix.0.len() {
-            let row = &matrix.0[i];
             let mut sum = 0.0;
             for j in 0..N {
-                sum += row.0[j] * v1.0[j];
+                sum += matrix.0[j].0[i] * v1.0[j];
             }
             result[i] = sum;
         }
@@ -77,10 +76,9 @@ impl <const N: usize> Vector<N> {
     pub fn transform(&mut self, matrix: &Matrix<N, N>) {   
         let mut result = [0.0; N];             
         for i in 0..matrix.0.len() {
-            let row = &matrix.0[i];
             let mut sum = 0.0;
             for j in 0..N {
-                sum += row.0[j] * self.0[j];
+                sum += matrix.0[j].0[i] * self.0[j];
             }
             result[i] = sum;
         }   
@@ -100,14 +98,19 @@ struct Matrix<const M: usize, const N: usize>([Vector<N>; M]);
 
 impl <const M: usize, const N: usize> Matrix<M, N> {
 
-    pub fn new(rows: [Vector<N>; M]) -> Self {
-        Matrix(rows)
+    pub fn new(cols: [Vector<N>; M]) -> Self {
+        Matrix(cols)
     }
 }
 
 const COUNTER_CLOCKWISE_90_DEGREES_TRANSFORMATION: Matrix<2, 2> = Matrix([
     Vector([0.0, 1.0]),
     Vector([-1.0, 0.0])
+]);
+
+const IDENTITY_TRANSFORMATION: Matrix<2, 2> = Matrix([
+    Vector([1.0, 0.0]),
+    Vector([0.0, 1.0])
 ]);
     
 
@@ -130,14 +133,43 @@ mod tests {
         ]);
         assert_eq!(
             Vector::static_transform(Vector::new([5.0, 7.0]), &transformation1),
-            Vector::new([17.0, 1.0])
+            Vector::new([31.0, -9.0])
         );
 
         let mut v3 = Vector::new([5.0, 7.0]);        
         v3.transform(&transformation1);
         assert_eq!(
             v3,
-            Vector::new([17.0, 1.0])
+            Vector::new([31.0, -9.0])
+        );
+
+        
+    }
+
+    #[test]
+    fn test2() {
+        let transformation2 = Matrix::new(
+            [
+                Vector::new([1.0, -2.0]),
+                Vector::new([3.0, 0.0])
+            ]
+        );
+
+        let mut v4 = Vector::new([-1.0, 2.0]);
+        v4.transform(&transformation2);
+        assert_eq!(
+            v4, 
+            Vector::new([5.0, 2.0])
+        );
+    }
+
+    #[test]
+    fn test_identity() {
+        let mut v1 = Vector::new([2.0, 2.0]);
+        v1.transform(&IDENTITY_TRANSFORMATION);
+        assert_eq!(
+            v1,
+            Vector::new([2.0, 2.0])
         );
     }
 }
