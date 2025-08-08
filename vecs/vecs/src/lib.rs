@@ -60,7 +60,7 @@ impl <const N: usize> Vector<N> {
     }
 
     /// Apply a lnear transformation to vector, returning a new vector
-    pub fn static_transform(v1: Self, matrix: &Matrix<N, N>) -> Self {
+    pub fn static_transform<const M: usize>(v1: Self, matrix: &Matrix<M, N>) -> Self {
     
         let mut result = [0.0; N];
         for i in 0..matrix.0.len() {
@@ -73,8 +73,8 @@ impl <const N: usize> Vector<N> {
         Vector::new(result)
     }
 
-    pub fn transform(&mut self, matrix: &Matrix<N, N>) {   
-        let mut result = [0.0; N];             
+    pub fn transform<const M: usize>(&mut self, matrix: &Matrix<M, N>) {   
+        let mut result = [0.0; N];
         for i in 0..matrix.0.len() {
             let mut sum = 0.0;
             for j in 0..N {
@@ -83,16 +83,14 @@ impl <const N: usize> Vector<N> {
             result[i] = sum;
         }   
 
-        for i in 0..N {
-            self.0[i] = result[i];
-        }     
+        self.0 = result;             
     }
 
 }
 
 
 /// A Matrix representation as a collection of M Vectors of N elements each
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, PartialEq, Clone, Debug)]
 struct Matrix<const M: usize, const N: usize>([Vector<N>; M]);
 
 
@@ -101,6 +99,37 @@ impl <const M: usize, const N: usize> Matrix<M, N> {
     pub fn new(cols: [Vector<N>; M]) -> Self {
         Matrix(cols)
     }
+
+    /// The determinant is a constant that indicates the proportionality of area change
+    ///  given by the linear transformation encoded in the matrix
+    /// So for example, if this number results in 2, it means it doubles 
+    ///  the Area of all regions in the space
+    /// If it is 0.5, it means it shrinks the area in half.
+    /// If it is 0, it means it squeezes all the area into a single point or line
+    /// A negative determinant means the direction of the space inverted with the transformation
+    pub fn determinant() -> f64 {
+        0.0
+    }
+
+    pub fn compose(&mut self, m2: &Matrix<M, N>) {
+        assert!(M == N);
+        // Apply the M2 transformation to each vector V of self
+        for i in 0..M {
+            let v = &mut self.0[i];
+            v.transform(m2);
+        }
+    }
+
+    // pub fn static_compose(m1: &Matrix<M, N>, m2: &Matrix<M, N>) -> Matrix<M, N> {
+    //     assert!(M == N);
+    //     // Apply the M2 transformation to each vector V of self
+    //     let mut vecs = Vec::new();
+    //     for i in 0..M {
+    //         let v = m1.0[i];
+    //         vecs.push(Vector::static_transform(v,&m2));
+    //     }
+
+    // }
 }
 
 const COUNTER_CLOCKWISE_90_DEGREES_TRANSFORMATION: Matrix<2, 2> = Matrix([
@@ -170,6 +199,29 @@ mod tests {
         assert_eq!(
             v1,
             Vector::new([2.0, 2.0])
+        );
+    }
+
+    #[test]
+    fn test_composition() {
+        let mut m1 = Matrix::new([
+            Vector::new([1.0, 1.0]),
+            Vector::new([-2.0, 0.0])
+        ]);
+
+        let m2 = Matrix::new([
+            Vector::new([0.0, 1.0]),
+            Vector::new([2.0, 0.0])
+        ]);
+
+        m1.compose(&m2);
+
+        assert_eq!(
+            m1, 
+            Matrix::new([
+                Vector::new([2.0, 1.0]),
+                Vector::new([0.0, -2.0])
+            ])
         );
     }
 }
